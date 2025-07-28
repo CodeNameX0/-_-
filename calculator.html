@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>계산기</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%); }
+        .container { width: 340px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #bdbdbd; padding: 32px 28px; }
+        .display { width: 100%; font-size: 2.2em; margin-bottom: 18px; padding: 10px; text-align: right; border: none; border-radius: 8px; background: #f5f5f5; box-shadow: 0 1px 2px #eee; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        button { font-size: 1.2em; padding: 18px 0; border: none; border-radius: 8px; background: #e3f2fd; cursor: pointer; transition: background 0.2s, box-shadow 0.2s; box-shadow: 0 1px 2px #eee; }
+        button:active { background: #bbdefb; }
+        button.special { background: #90caf9; color: #fff; font-weight: bold; }
+        button.cipher { background: #f06292; color: #fff; font-weight: bold; }
+        button.back { background: #bdbdbd; color: #fff; }
+        .hidden { display: none; }
+        .cipher-box { margin-top: 24px; background: #fce4ec; border-radius: 12px; padding: 18px; box-shadow: 0 1px 4px #f8bbd0; }
+        .cipher-input { width: 100%; font-size: 1.1em; padding: 10px; margin-bottom: 14px; border: none; border-radius: 8px; background: #fff3e0; }
+        .cipher-btns { display: flex; gap: 10px; justify-content: space-between; }
+        #cipher-result { margin-top: 12px; color: #d81b60; font-weight: bold; word-break: break-all; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="calc-area">
+        <input type="text" id="display" class="display" readonly>
+        <div class="buttons">
+            <button onclick="press('7')">7</button>
+            <button onclick="press('8')">8</button>
+            <button onclick="press('9')">9</button>
+            <button onclick="press('/')">/</button>
+            <button onclick="press('4')">4</button>
+            <button onclick="press('5')">5</button>
+            <button onclick="press('6')">6</button>
+            <button onclick="press('*')">*</button>
+            <button onclick="press('1')">1</button>
+            <button onclick="press('2')">2</button>
+            <button onclick="press('3')">3</button>
+            <button onclick="press('-')">-</button>
+            <button onclick="press('0')">0</button>
+            <button onclick="press('.')">.</button>
+            <button onclick="clearDisplay()" class="special">C</button>
+            <button onclick="press('+')">+</button>
+            <button style="grid-column: span 4;" class="special" onclick="calculate()">=</button>
+        </div>
+    </div>
+    <div id="cipher-area" class="hidden">
+        <div class="cipher-box">
+            <input type="text" id="cipher-input" class="cipher-input" placeholder="텍스트 입력">
+            <div class="cipher-btns" style="gap:0; justify-content:center;">
+                <button onclick="obfuscate()" class="cipher" style="flex:1; margin-right:8px;">난독화</button>
+                <button onclick="deobfuscate()" class="cipher" style="flex:1; margin-left:8px;">해독</button>
+            </div>
+            <div style="text-align:right; margin-top:10px;">
+                <button onclick="backToCalc()" class="back" style="padding:6px 18px; font-size:1em;">돌아가기</button>
+            </div>
+        </div>
+        <div id="cipher-result" style="margin-top:10px; color:#1976d2; font-weight:bold;"></div>
+    </div>
+</div>
+<script>
+let expression = "";
+function press(char) {
+    expression += char;
+    document.getElementById('display').value = expression;
+}
+function clearDisplay() {
+    expression = "";
+    document.getElementById('display').value = "";
+}
+function calculate() {
+    if (expression === "236*0.666") {
+        document.getElementById('calc-area').classList.add('hidden');
+        document.getElementById('cipher-area').classList.remove('hidden');
+        document.getElementById('display').value = "";
+        expression = "";
+        return;
+    }
+    try {
+        let result = eval(expression);
+        document.getElementById('display').value = result;
+        expression = result.toString();
+    } catch {
+        document.getElementById('display').value = "Error";
+        expression = "";
+    }
+}
+// 더 복잡한 난독화: base64 + 문자 치환 + 역순
+function obfuscate() {
+    let text = document.getElementById('cipher-input').value;
+    if (!text) return;
+    // 1. base64 인코딩
+    let b64 = btoa(unescape(encodeURIComponent(text)));
+    // 2. 문자 치환 (a->#, e->@, i->!, o->$, u->^)
+    let replaced = b64.replace(/a/g, '#').replace(/e/g, '@').replace(/i/g, '!').replace(/o/g, '$').replace(/u/g, '^');
+    // 3. 역순
+    let obfuscated = replaced.split('').reverse().join('');
+    document.getElementById('cipher-result').textContent = "난독화 결과: " + obfuscated;
+}
+// 더 복잡한 해독: 역순 + 문자 복원 + base64 디코딩
+function deobfuscate() {
+    let text = document.getElementById('cipher-input').value;
+    if (!text) return;
+    // 1. 역순 복원
+    let reversed = text.split('').reverse().join('');
+    // 2. 문자 복원 (#->a, @->e, !->i, $->o, ^->u)
+    let restored = reversed.replace(/#/g, 'a').replace(/@/g, 'e').replace(/!/g, 'i').replace(/\$/g, 'o').replace(/\^/g, 'u');
+    // 3. base64 디코딩
+    let decoded = '';
+    try {
+        decoded = decodeURIComponent(escape(atob(restored)));
+    } catch {
+        decoded = '해독 실패';
+    }
+    document.getElementById('cipher-result').textContent = "해독 결과: " + decoded;
+}
+function backToCalc() {
+    document.getElementById('cipher-area').classList.add('hidden');
+    document.getElementById('calc-area').classList.remove('hidden');
+    document.getElementById('cipher-input').value = "";
+    document.getElementById('cipher-result').textContent = "";
+}
+</script>
+</body>
+</html>
